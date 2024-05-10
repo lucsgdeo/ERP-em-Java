@@ -13,8 +13,6 @@ import com.lucas.gestaoDeVendas.modelo.dominio.Perfil;
 import com.lucas.gestaoDeVendas.modelo.dominio.Usuario;
 
 public class UsuarioDao {
-
-	
 	private final Conexao conectar;
 	
 	public UsuarioDao() {
@@ -27,6 +25,13 @@ public class UsuarioDao {
 
 	private String adicionar(Usuario usuario) {
 		String sql = "INSERT INTO usuario(nome, usuario, senha, perfil, estado) VALUES (?, ?, ?, ?, ?)";
+		
+		Usuario usuarioTemp = buscarUsuarioPeloUsuario(usuario.getUsuario());
+		
+		if(usuarioTemp != null) {
+			return String.format("Error: usuário %s já existe no banco.", usuarioTemp.getUsuario());
+		}
+		
 		try {
 			PreparedStatement preparedStatement = conectar.obterConexao().prepareStatement(sql);
 			preencherValoresNoPreparedStatement(preparedStatement, usuario);
@@ -46,7 +51,7 @@ public class UsuarioDao {
 			preencherValoresNoPreparedStatement(preparedStatement, usuario);
 			int resultado = preparedStatement.executeUpdate();
 			
-			return resultado == 1 ? "Usuário editado com sucesso" : "Não foi possível editado usuário";			
+			return resultado == 1 ? "Usuário editado com sucesso" : "Não foi possível editar usuário";			
 		} catch (SQLException e) {
 			return e.getMessage();
 		}
@@ -81,6 +86,36 @@ public class UsuarioDao {
 		return usuarios;
 	}
 	
+	public Usuario buscarUsuarioPeloId(Long id) {
+		String sql = String.format("SELECT * FROM usuario WHERE id = %d", id);
+		try {
+			ResultSet resultset = conectar.obterConexao().prepareStatement(sql).executeQuery();
+			
+			if(resultset.next()) {
+				return getUsuario(resultset);
+			}
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+		
+		return null;
+	}
+	
+	public Usuario buscarUsuarioPeloUsuario(String usuario) {
+		String sql = String.format("SELECT * FROM usuario WHERE usuario = %s", usuario);
+		try {
+			ResultSet resultset = conectar.obterConexao().prepareStatement(sql).executeQuery();
+			
+			if(resultset.next()) {
+				return getUsuario(resultset);
+			}
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+		
+		return null;
+	}
+
 	private Usuario getUsuario(ResultSet resultSet) throws SQLException {
 		Usuario usuario = new Usuario();
 		
